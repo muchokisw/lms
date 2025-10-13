@@ -1,6 +1,14 @@
+// In lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'auth/sign_in.dart'; // Import the new screen
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -9,11 +17,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Blank App')),
-        body: const Center(child: Text('This is a blank app.')),
-      ),
+    return const MaterialApp(
+      home: SignInScreen(), // Set the sign-in screen as the home
     );
   }
 }
