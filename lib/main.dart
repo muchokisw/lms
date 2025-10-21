@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,11 +34,13 @@ class MyApp extends StatelessWidget {
           valueListenable: ZoomNotifier.zoomLevel,
           builder: (context, zoomLevel, child) {
             return MaterialApp(
-              title: 'Jubilee LMS',
+              title: 'LMS',
               // Apply the zoom level to the entire app
               builder: (context, child) {
                 return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(textScaleFactor: zoomLevel),
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.linear(zoomLevel)),
                   child: child!,
                 );
               },
@@ -50,104 +51,103 @@ class MyApp extends StatelessWidget {
                   Theme.of(context).textTheme,
                 ),
                 brightness: Brightness.light,
-                 primaryColor: Colors.grey,
-            scaffoldBackgroundColor: Colors.white,
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-            ),
-            colorScheme: const ColorScheme.light(
-              primary: Colors.grey,
-              secondary: Colors.black,
-              surface: Colors.white,
-              background: Colors.white,
-              onPrimary: Colors.black,
-              onSecondary: Colors.white,
-              onSurface: Colors.black,
-              onBackground: Colors.black,
-              error: Colors.red,
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.grey,
-                  width: 2,
+                primaryColor: Colors.grey,
+                scaffoldBackgroundColor: Colors.white,
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
                 ),
-              ),
-              labelStyle: TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.black,
-              ),
-            ),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.0)),
-              ),
-            ),
+                colorScheme: const ColorScheme.light(
+                  primary: Colors.grey,
+                  secondary: Colors.black,
+                  surface: Colors.white,
+                  onPrimary: Colors.black,
+                  onSecondary: Colors.white,
+                  onSurface: Colors.black,
+                  error: Colors.red,
+                ),
+                inputDecorationTheme: const InputDecorationTheme(
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 2),
+                  ),
+                  labelStyle: TextStyle(color: Colors.grey),
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
+                ),
+                outlinedButtonTheme: OutlinedButtonThemeData(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey[500],
+                  ),
+                ),
+                elevatedButtonTheme: ElevatedButtonThemeData(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.0),
+                    ),
+                  ),
+                ),
               ),
               // Dark Theme
               darkTheme: ThemeData(
                 useMaterial3: false,
                 textTheme: GoogleFonts.montserratTextTheme(
-                  Theme.of(context).textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
+                  Theme.of(context).textTheme.apply(
+                    bodyColor: Colors.white,
+                    displayColor: Colors.white,
+                  ),
                 ),
                 brightness: Brightness.dark,
-                 primaryColor: Colors.grey[900],
-            scaffoldBackgroundColor: Colors.grey[900],
-            appBarTheme: AppBarTheme(
-              backgroundColor: Colors.grey[900],
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
-            colorScheme: ColorScheme.dark(
-              primary: Colors.grey[900]!,
-              secondary: Colors.grey,
-              surface: const Color.fromRGBO(33, 33, 33, 1),
-              background: Colors.grey[900]!,
-              onPrimary: Colors.white,
-              onSecondary: Colors.black,
-              onSurface: Colors.white,
-              onBackground: Colors.white,
-              error: Colors.redAccent,
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-               border: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey)
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 2,
+                primaryColor: Colors.grey[900],
+                scaffoldBackgroundColor: Colors.grey[900],
+                appBarTheme: AppBarTheme(
+                  backgroundColor: Colors.grey[900],
+                  foregroundColor: Colors.white,
+                  elevation: 0,
                 ),
-              ),
-              labelStyle: TextStyle(
-                color: Colors.white,
-              ),
-            ),
-            textSelectionTheme: const TextSelectionThemeData(
-              cursorColor: Colors.white,
-              selectionColor: Colors.grey,
-              selectionHandleColor: Colors.white,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-              ),
-            ),
-             elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.grey[900]!,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.0)),
-              ),
-            ),
+                colorScheme: ColorScheme.dark(
+                  primary: Colors.grey[900]!,
+                  secondary: Colors.grey,
+                  surface: const Color.fromRGBO(33, 33, 33, 1),
+                  onPrimary: Colors.white,
+                  onSecondary: Colors.black,
+                  onSurface: Colors.white,
+                  error: Colors.redAccent,
+                ),
+                inputDecorationTheme: const InputDecorationTheme(
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white, width: 2),
+                  ),
+                  labelStyle: TextStyle(color: Colors.white),
+                ),
+                textSelectionTheme: const TextSelectionThemeData(
+                  cursorColor: Colors.white,
+                  selectionColor: Colors.grey,
+                  selectionHandleColor: Colors.white,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                ),
+                outlinedButtonTheme: OutlinedButtonThemeData(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey[500],
+                  ),
+                ),
+                elevatedButtonTheme: ElevatedButtonThemeData(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.grey[900]!,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.0),
+                    ),
+                  ),
+                ),
               ),
               themeMode: themeMode,
               home: const AuthWrapper(),
@@ -158,7 +158,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -176,7 +175,10 @@ class AuthWrapper extends StatelessWidget {
 
         if (snapshot.hasData) {
           return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection('users').doc(snapshot.data!.uid).get(),
+            future: FirebaseFirestore.instance
+                .collection('users')
+                .doc(snapshot.data!.uid)
+                .get(),
             builder: (context, userSnapshot) {
               if (userSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
@@ -190,7 +192,8 @@ class AuthWrapper extends StatelessWidget {
                 return const AuthScreen();
               }
 
-              final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+              final userData =
+                  userSnapshot.data!.data() as Map<String, dynamic>;
               final role = userData['role'];
 
               if (role == 'Administrator') {
@@ -201,7 +204,7 @@ class AuthWrapper extends StatelessWidget {
             },
           );
         }
-        
+
         // If no auth data, show in screen
         return const AuthScreen();
       },

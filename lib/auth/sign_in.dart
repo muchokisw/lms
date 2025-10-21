@@ -18,7 +18,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _firstNameController = TextEditingController();
   final _secondNameController = TextEditingController();
   String _selectedRole = 'Legal Officer'; // Default role
-  bool _isLogin = true;
+  final bool _isLogin = true;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
@@ -107,108 +107,99 @@ class _AuthScreenState extends State<AuthScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _isLogin ? 'Welcome' : 'Create your Account',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      if (!_isLogin) ...[
-                        _buildTextField(
-                          controller: _firstNameController,
-                          labelText: 'First Name',
-                          validator: (value) => value!.trim().isEmpty
-                              ? 'Please enter your first name.'
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _secondNameController,
-                          labelText: 'Second Name',
-                          validator: (value) => value!.trim().isEmpty
-                              ? 'Please enter your second name.'
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                        // Role Dropdown remains standard
-                        DropdownButtonFormField<String>(
-                          value: _selectedRole,
-                          decoration: const InputDecoration(
-                            labelText: 'Role',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: ['Administrator', 'Legal Officer']
-                              .map(
-                                (role) => DropdownMenuItem(
-                                  value: role,
-                                  child: Text(role),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => _selectedRole = value);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      _buildTextField(
-                        controller: _emailController,
-                        labelText: 'Email Address',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) => !value!.contains('@')
-                            ? 'Please enter a valid email.'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPasswordField(),
-                      const SizedBox(height: 16),
-                      if (_isLoading)
-                        const Center(child: CircularProgressIndicator())
-                      else
-                        ElevatedButton(
-                          onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 22),
-                          ),
-                          child: Text(
-                            _isLogin ? 'Sign In' : 'Create Account',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 12),
-                      // TextButton(
-                      //   onPressed: () => setState(() => _isLogin = !_isLogin),
-                      //   child: Text(
-                      //     _isLogin
-                      //         ? 'Don\'t have an account? Sign up'
-                      //         : 'Already have an account? Sign in',
-                      //   ),
-                      // ),
-                    ],
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    _isLogin ? 'Welcome' : 'Create your Account',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                  const SizedBox(height: 24),
+                  if (!_isLogin) ...[
+                    _buildTextField(
+                      controller: _firstNameController,
+                      labelText: 'First Name',
+                      validator: (value) => value!.trim().isEmpty
+                          ? 'Please enter your first name.'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _secondNameController,
+                      labelText: 'Second Name',
+                      validator: (value) => value!.trim().isEmpty
+                          ? 'Please enter your second name.'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    // Role Dropdown remains standard
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedRole,
+                      decoration: const InputDecoration(
+                        labelText: 'Role',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: ['Administrator', 'Legal Officer']
+                          .map(
+                            (role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedRole = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  _buildTextField(
+                    controller: _emailController,
+                    labelText: 'Email Address',
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) => !value!.contains('@')
+                        ? 'Please enter a valid email.'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(),
+                  const SizedBox(height: 16),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 22),
+                      ),
+                      child: Text(
+                        _isLogin ? 'Sign In' : 'Create Account',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  // TextButton(
+                  //   onPressed: () => setState(() => _isLogin = !_isLogin),
+                  //   child: Text(
+                  //     _isLogin
+                  //         ? 'Don\'t have an account? Sign up'
+                  //         : 'Already have an account? Sign in',
+                  //   ),
+                  // ),
+                ],
               ),
             ),
           ),
@@ -224,60 +215,61 @@ class _AuthScreenState extends State<AuthScreen> {
     String? Function(String?)? validator,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.black : Colors.grey[200],
-        borderRadius: BorderRadius.circular(6.0),
-      ),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: labelText,
-          border: InputBorder.none,
-          focusedBorder: InputBorder.none,
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
         ),
-        keyboardType: keyboardType,
-        validator: validator,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2.0),
+        ),
       ),
+      keyboardType: keyboardType,
+      validator: validator,
     );
   }
 
   Widget _buildPasswordField() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.black : Colors.grey[200],
-        borderRadius: BorderRadius.circular(6.0),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-              ),
-              obscureText: !_isPasswordVisible,
-              validator: (value) => value!.length < 6
-                  ? 'Password must be at least 6 characters.'
-                  : null,
-            ),
+    return TextFormField(
+      controller: _passwordController,
+      decoration: InputDecoration(
+        labelText: 'Password',
+        labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.0),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2.0),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+            color: isDarkMode ? Colors.white : Colors.black,
           ),
-          IconButton(
-            icon: Icon(
-              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-              color: isDarkMode ? Colors.grey[600] : Colors.grey,
-            ),
-            onPressed: () {
-              setState(() => _isPasswordVisible = !_isPasswordVisible);
-            },
-          ),
-        ],
+          onPressed: () {
+            setState(() => _isPasswordVisible = !_isPasswordVisible);
+          },
+        ),
       ),
+      obscureText: !_isPasswordVisible,
+      validator: (value) =>
+          value!.length < 6 ? 'Password must be at least 6 characters.' : null,
     );
   }
 }

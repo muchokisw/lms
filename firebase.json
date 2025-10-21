@@ -1,1 +1,16 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"jubileeinsurancelms","appId":"1:813302444240:android:618ee972ed798f67c4eed5","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"jubileeinsurancelms","configurations":{"android":"1:813302444240:android:618ee972ed798f67c4eed5","ios":"1:813302444240:ios:d913c2cd91d100edc4eed5","web":"1:813302444240:web:dfb32011d788fe22c4eed5"}}}}},"firestore":{"database":"(default)","location":"nam7","rules":"firestore.rules","indexes":"firestore.indexes.json"}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
