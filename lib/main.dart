@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6.0),
+                      borderRadius: BorderRadius.circular(24.0),
                     ),
                   ),
                 ),
@@ -144,7 +144,7 @@ class MyApp extends StatelessWidget {
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.grey[900]!,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6.0),
+                      borderRadius: BorderRadius.circular(24.0),
                     ),
                   ),
                 ),
@@ -197,7 +197,7 @@ class AuthWrapper extends StatelessWidget {
               final role = userData['role'];
 
               if (role == 'Administrator') {
-                return const AdminHomeScreen();
+                return const AdminDashboardPage();
               } else {
                 return const UserHomeScreen();
               }

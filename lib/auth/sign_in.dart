@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '/services/theme_notifier.dart';
-import '/services/zoom_notifier.dart';
+import '../services/theme_notifier.dart';
+import '../services/zoom_notifier.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -15,12 +14,11 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _secondNameController = TextEditingController();
-  String _selectedRole = 'Legal Officer'; // Default role
-  final bool _isLogin = true;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -29,31 +27,10 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      if (_isLogin) {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-      } else {
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            );
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-              'userId': userCredential.user!.uid,
-              'firstName': _firstNameController.text.trim(),
-              'secondName': _secondNameController.text.trim(),
-              'email': _emailController.text.trim(),
-              'createdAt': Timestamp.now(),
-              'updatedAt': Timestamp.now(),
-              'role': _selectedRole,
-            });
-      }
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,8 +51,8 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _firstNameController.dispose();
-    _secondNameController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -114,60 +91,24 @@ class _AuthScreenState extends State<AuthScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    _isLogin ? 'Welcome' : 'Create your Account',
-                    style: const TextStyle(
+                  const Text(
+                    'Welcome',
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  if (!_isLogin) ...[
-                    _buildTextField(
-                      controller: _firstNameController,
-                      labelText: 'First Name',
-                      validator: (value) => value!.trim().isEmpty
-                          ? 'Please enter your first name.'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: _secondNameController,
-                      labelText: 'Second Name',
-                      validator: (value) => value!.trim().isEmpty
-                          ? 'Please enter your second name.'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    // Role Dropdown remains standard
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedRole,
-                      decoration: const InputDecoration(
-                        labelText: 'Role',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ['Administrator', 'Legal Officer']
-                          .map(
-                            (role) => DropdownMenuItem(
-                              value: role,
-                              child: Text(role),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedRole = value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                   _buildTextField(
                     controller: _emailController,
                     labelText: 'Email Address',
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) => !value!.contains('@')
+                    focusNode: _emailFocusNode,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_passwordFocusNode);
+                    },
+                    validator: (value) => !(value??'').contains('@')
                         ? 'Please enter a valid email.'
                         : null,
                   ),
@@ -182,23 +123,14 @@ class _AuthScreenState extends State<AuthScreen> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 22),
                       ),
-                      child: Text(
-                        _isLogin ? 'Sign In' : 'Create Account',
-                        style: const TextStyle(
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  // TextButton(
-                  //   onPressed: () => setState(() => _isLogin = !_isLogin),
-                  //   child: Text(
-                  //     _isLogin
-                  //         ? 'Don\'t have an account? Sign up'
-                  //         : 'Already have an account? Sign in',
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -213,23 +145,27 @@ class _AuthScreenState extends State<AuthScreen> {
     required String labelText,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    FocusNode? focusNode,
+    void Function(String)? onFieldSubmitted,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2.0),
         ),
       ),
@@ -242,19 +178,21 @@ class _AuthScreenState extends State<AuthScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return TextFormField(
       controller: _passwordController,
+      focusNode: _passwordFocusNode,
+      onFieldSubmitted: (_) => _submit(),
       decoration: InputDecoration(
         labelText: 'Password',
         labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6.0),
+          borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black, width: 2.0),
         ),
         suffixIcon: IconButton(
@@ -269,7 +207,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       obscureText: !_isPasswordVisible,
       validator: (value) =>
-          value!.length < 6 ? 'Password must be at least 6 characters.' : null,
+          (value??'').length < 6 ? 'Password must be at least 6 characters.' : null,
     );
   }
 }

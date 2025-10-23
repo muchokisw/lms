@@ -1,44 +1,452 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '/services/theme_notifier.dart';
-import '/services/zoom_notifier.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/theme_notifier.dart';
+import '../../services/zoom_notifier.dart';
+import '../tabs/admin_home_tab.dart';
+import '../tabs/contracts_tab.dart';
+import '../tabs/demands_tab.dart';
+import '../tabs/intellectual_property_tab.dart';
+import '../tabs/leases_tab.dart';
+import '../tabs/litigation_tab.dart';
 
-class AdminHomeScreen extends StatelessWidget {
-  const AdminHomeScreen({super.key});
+// Avatar context menu content widget
+class _AvatarMenuContent extends StatelessWidget {
+  final String fullName;
+  final String email;
+
+  const _AvatarMenuContent({
+    required this.fullName,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final foregroundColor = isDarkMode ? Colors.black : Colors.black;
+    final buttonBackgroundColor = isDarkMode ? Colors.black : Colors.black;
+    final buttonForegroundColor = isDarkMode ? Colors.white : Colors.white;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 220, maxWidth: 320),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            fullName,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: 
+            FontWeight.bold, 
+            color: foregroundColor
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            email,
+            style: TextStyle(color: foregroundColor)
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonBackgroundColor,
+              foregroundColor: buttonForegroundColor,
+            ),
+            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pop(); // Close the sheet
+              Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (route) => false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
+
+  @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  String? _firstNameInitial;
+  String? _fullName;
+  String? _email;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadUserInitial();
+  }
+
+  Future<void> _loadUserInitial() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        final data = doc.data();
+        String? firstName;
+        String? lastName;
+        if (data != null && data['firstName'] != null && data['firstName'].toString().isNotEmpty) {
+          firstName = data['firstName'];
+          _firstNameInitial = (firstName != null && firstName.isNotEmpty) ? firstName[0].toUpperCase() : null;
+        } else if (data != null && data['name'] != null && data['name'].toString().isNotEmpty) {
+          firstName = data['name'];
+          _firstNameInitial = (firstName != null && firstName.isNotEmpty) ? firstName[0].toUpperCase() : null;
+        }
+        if (data != null && data['lastName'] != null && data['lastName'].toString().isNotEmpty) {
+          lastName = data['lastName'];
+        }
+        setState(() {
+          _fullName = lastName != null && firstName != null ? '$firstName $lastName' : firstName ?? '';
+          _email = user.email;
+        });
+      }
+    }
+  }
+  int _selectedIndex = 0;
+  final List<Widget> _tabs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs.addAll([
+      AdminHomeTab(onSummaryTap: _onItemTapped),
+      const ContractsTab(),
+      const DemandsTab(),
+      const IntellectualPropertyTab(),
+      const LeasesTab(),
+      const LitigationTab(),
+    ]);
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final isWideScreen = screenWidth > 850;
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: screenWidth >= 800
+            ? const Center(
+                child: Text(
+                  '',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              )
+            : const Text(
+                '',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+        centerTitle: screenWidth >= 800,
         actions: [
-           IconButton(
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => ZoomNotifier.increaseZoom(),
-            tooltip: 'Zoom In',
+            //tooltip: 'Zoom In',
           ),
           IconButton(
             icon: const Icon(Icons.remove),
             onPressed: () => ZoomNotifier.decreaseZoom(),
-            tooltip: 'Zoom Out',
+            //tooltip: 'Zoom Out',
           ),
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () => ThemeNotifier.toggleTheme(),
-            tooltip: 'Toggle Theme',
+           ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeNotifier.themeMode,
+            builder: (context, mode, _) => IconButton(
+              icon: Icon(
+                mode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
+              ),
+              onPressed: () {
+                ThemeNotifier.toggleTheme();
+              },
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => FirebaseAuth.instance.signOut(),
-            tooltip: 'Sign Out',
+          if (_firstNameInitial != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _AvatarMenu(
+                initial: _firstNameInitial!,
+                fullName: _fullName,
+                email: _email,
+              ),
+            ),
+        ],
+      ),
+      body: Row(
+        children: [
+          if (isWideScreen)
+            _SideNavigationMenu(
+              selectedIndex: _selectedIndex,
+              onItemTapped: _onItemTapped,
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _tabs,
+            ),
           ),
         ],
       ),
-      body: const Center(
-        child: Text('Welcome, Admin!'),
+      bottomNavigationBar: isWideScreen
+          ? null
+          : BottomNavigationBar(
+              type: BottomNavigationBarType.shifting,
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              selectedItemColor: isDarkMode ? Colors.white : Colors.black,
+              unselectedItemColor: isDarkMode ? Colors.white : Colors.black,
+              backgroundColor: isDarkMode ? Colors.black : Colors.white,
+              items: [
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.home),
+                      if (_selectedIndex == 0)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.gavel),
+                      if (_selectedIndex == 1)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.warning),
+                      if (_selectedIndex == 2)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lightbulb),
+                      if (_selectedIndex == 3)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.real_estate_agent),
+                      if (_selectedIndex == 4)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+                 BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.balance),
+                      if (_selectedIndex == 5)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
+                  label: '',
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _SideNavigationMenu extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onItemTapped;
+
+  const _SideNavigationMenu({
+    required this.selectedIndex,
+    required this.onItemTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+        width: 80,
+        color: isDarkMode ? Colors.grey[900] : Colors.white,
+        child: Column(
+          children: [
+            _buildNavItem(context, Icons.home, 'Home', 0),
+            _buildNavItem(context, Icons.adf_scanner, 'Contracts', 1),
+            _buildNavItem(context, Icons.emoji_people, 'Demands', 2),
+            _buildNavItem(context, Icons.lightbulb, 'Intellectual Property', 3),
+            _buildNavItem(context, Icons.apartment, 'Leases', 4),
+            _buildNavItem(context, Icons.balance, 'Litigation', 5),
+          ],
+        ),
+      );
+  }
+
+  Widget _buildNavItem(BuildContext context, IconData icon, String title, int index) {
+    final isSelected = selectedIndex == index;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Tooltip(
+      message: title,
+      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      child: InkWell(
+        onTap: () => onItemTapped(index),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? (isDarkMode ? Colors.grey : Colors.black) : Colors.transparent,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? (isDarkMode ? Colors.black : Colors.white) : (isDarkMode ? Colors.white : Colors.black),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _AvatarMenu extends StatefulWidget {
+  final String initial;
+  final String? fullName;
+  final String? email;
+  const _AvatarMenu({required this.initial, this.fullName, this.email});
+
+  @override
+  State<_AvatarMenu> createState() => _AvatarMenuState();
+}
+
+class _AvatarMenuState extends State<_AvatarMenu> {
+  final GlobalKey _avatarKey = GlobalKey();
+
+  void _showMenu() async {
+    final RenderBox renderBox = _avatarKey.currentContext!.findRenderObject() as RenderBox;
+    final Offset offset = renderBox.localToGlobal(Offset.zero);
+    final Size size = renderBox.size;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    await showMenu(
+      context: context,
+      color: isDarkMode ? Colors.grey : Colors.grey[200],
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + size.height,
+        offset.dx + size.width,
+        offset.dy,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: _AvatarMenuContent(
+            fullName: widget.fullName ?? '',
+            email: widget.email ?? '',
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: _avatarKey,
+      onTap: _showMenu,
+      child: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
+        child: Text(
+          widget.initial,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
