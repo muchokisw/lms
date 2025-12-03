@@ -7,12 +7,12 @@ import '/firebase_options.dart';
 import '/auth/sign_in.dart';
 import '/views/home_pages/admin_home.dart';
 import '/views/home_pages/user_home.dart';
+import '/views/home_pages/client_home.dart'; // Import the new client home page
 import '/services/theme_notifier.dart';
 import '/services/zoom_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Check if Firebase is already initialized to prevent duplicate app error
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -26,7 +26,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to both theme and zoom changes
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeNotifier.themeMode,
       builder: (context, themeMode, child) {
@@ -35,21 +34,18 @@ class MyApp extends StatelessWidget {
           builder: (context, zoomLevel, child) {
             return MaterialApp(
               title: 'LMS',
-              // Apply the zoom level to the entire app
+              routes: {
+                '/client_home': (context) => const ClientDashboardPage(),
+              },
               builder: (context, child) {
                 return MediaQuery(
-                  data: MediaQuery.of(
-                    context,
-                  ).copyWith(textScaler: TextScaler.linear(zoomLevel)),
+                  data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(zoomLevel)),
                   child: child!,
                 );
               },
-              // Light Theme
               theme: ThemeData(
                 useMaterial3: false,
-                textTheme: GoogleFonts.montserratTextTheme(
-                  Theme.of(context).textTheme,
-                ),
+                textTheme: GoogleFonts.montserratTextTheme(Theme.of(context).textTheme),
                 brightness: Brightness.light,
                 primaryColor: Colors.grey,
                 scaffoldBackgroundColor: Colors.white,
@@ -78,8 +74,13 @@ class MyApp extends StatelessWidget {
                 ),
                 outlinedButtonTheme: OutlinedButtonThemeData(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[500],
-                  ),
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.black),
+                     shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
+                    
+                    ),
                 ),
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
@@ -91,14 +92,13 @@ class MyApp extends StatelessWidget {
                   ),
                 ),
               ),
-              // Dark Theme
               darkTheme: ThemeData(
                 useMaterial3: false,
                 textTheme: GoogleFonts.montserratTextTheme(
                   Theme.of(context).textTheme.apply(
-                    bodyColor: Colors.white,
-                    displayColor: Colors.white,
-                  ),
+                        bodyColor: Colors.white,
+                        displayColor: Colors.white,
+                      ),
                 ),
                 brightness: Brightness.dark,
                 primaryColor: Colors.grey[900],
@@ -136,8 +136,13 @@ class MyApp extends StatelessWidget {
                 ),
                 outlinedButtonTheme: OutlinedButtonThemeData(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[500],
-                  ),
+                    foregroundColor: Colors.white, 
+                    side: const BorderSide(color: Colors.white),
+                     shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
+                    ),
+                
                 ),
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
@@ -178,7 +183,7 @@ class AuthWrapper extends StatelessWidget {
             future: FirebaseFirestore.instance
                 .collection('users')
                 .doc(snapshot.data!.uid)
-                .get(),
+                .get(const GetOptions(source: Source.server)), // Force server fetch
             builder: (context, userSnapshot) {
               if (userSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
@@ -187,7 +192,6 @@ class AuthWrapper extends StatelessWidget {
               }
 
               if (userSnapshot.hasError || !userSnapshot.data!.exists) {
-                // Default to signing out if user doc is missing
                 FirebaseAuth.instance.signOut();
                 return const AuthScreen();
               }
@@ -198,6 +202,8 @@ class AuthWrapper extends StatelessWidget {
 
               if (role == 'Administrator') {
                 return const AdminDashboardPage();
+              } else if (role == 'Client') { // Add this condition for the Client role
+                return const ClientDashboardPage();
               } else {
                 return const UserHomeScreen();
               }
@@ -205,7 +211,6 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // If no auth data, show in screen
         return const AuthScreen();
       },
     );

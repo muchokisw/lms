@@ -3,12 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/theme_notifier.dart';
 import '../../services/zoom_notifier.dart';
-import '../tabs/admin_home_tab.dart';
-import '../tabs/contracts_tab.dart';
-import '../tabs/demands_tab.dart';
-import '../tabs/intellectual_property_tab.dart';
-import '../tabs/leases_tab.dart';
-import '../tabs/litigation_tab.dart';
+import '../tabs/client/client_home_tab.dart';
+import '../tabs/client/client_contracts_tab.dart';
+import '../tabs/client/client_demands_tab.dart';
+import '../tabs/client/client_intellectual_property_tab.dart';
+import '../tabs/client/client_leases_tab.dart';
+import '../tabs/client/client_litigation_tab.dart';
+import '../tabs/settings_tab.dart'; 
 
 // Avatar context menu content widget
 class _AvatarMenuContent extends StatelessWidget {
@@ -84,65 +85,54 @@ class _AvatarMenuContent extends StatelessWidget {
   }
 }
 
-class UserHomeScreen extends StatefulWidget {
-  const UserHomeScreen({super.key});
+class ClientDashboardPage extends StatefulWidget {
+  const ClientDashboardPage({super.key});
 
   @override
-  State<UserHomeScreen> createState() => _UserHomeScreenState();
+  State<ClientDashboardPage> createState() => _ClientDashboardPageState();
 }
 
-class _UserHomeScreenState extends State<UserHomeScreen> {
+class _ClientDashboardPageState extends State<ClientDashboardPage> {
   String? _firstNameInitial;
   String? _fullName;
   String? _email;
   String? _role;
+  int _selectedIndex = 0;
+
+  final List<Widget> _tabs = [
+    const ClientHomeTab(),
+    const ClientContractsTab(),
+    const ClientDemandsTab(),
+    const ClientIntellectualPropertyTab(),
+    const ClientLeasesTab(),
+    const ClientLitigationTab(),
+    const SettingsTab(), // Assuming settings is a shared tab
+  ];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadUserInitial();
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  Future<void> _loadUserInitial() async {
+  Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       if (doc.exists) {
         final data = doc.data();
-        String? firstName;
-        String? lastName;
-        if (data != null && data['firstName'] != null && data['firstName'].toString().isNotEmpty) {
-          firstName = data['firstName'];
-          _firstNameInitial = (firstName != null && firstName.isNotEmpty) ? firstName[0].toUpperCase() : null;
-        } else if (data != null && data['name'] != null && data['name'].toString().isNotEmpty) {
-          firstName = data['name'];
-          _firstNameInitial = (firstName != null && firstName.isNotEmpty) ? firstName[0].toUpperCase() : null;
+        if (data != null) {
+          final firstName = data['firstName'] as String? ?? '';
+          final lastName = data['lastName'] as String? ?? '';
+          setState(() {
+            _firstNameInitial = (firstName.isNotEmpty) ? firstName[0].toUpperCase() : '';
+            _fullName = '$firstName $lastName'.trim();
+            _email = user.email;
+            _role = data['role'] as String? ?? 'Client';
+          });
         }
-        if (data != null && data['lastName'] != null && data['lastName'].toString().isNotEmpty) {
-          lastName = data['lastName'];
-        }
-        setState(() {
-          _fullName = lastName != null && firstName != null ? '$firstName $lastName' : firstName ?? '';
-          _email = user.email;
-          _role = data?['role'];
-        });
       }
     }
-  }
-  int _selectedIndex = 0;
-  final List<Widget> _tabs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs.addAll([
-      AdminHomeTab(onSummaryTap: _onItemTapped),
-      const ContractsTab(),
-      const DemandsTab(),
-      const IntellectualPropertyTab(),
-      const LeasesTab(),
-      const LitigationTab(),
-    ]);
   }
 
   void _onItemTapped(int index) {
@@ -153,44 +143,26 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final isWideScreen = screenWidth > 850;
-  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
-        title: screenWidth >= 800
-            ? const Center(
-                child: Text(
-                  '',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              )
-            : const Text(
-                '',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+        title: Text('', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: screenWidth >= 800,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => ZoomNotifier.increaseZoom(),
-            //tooltip: 'Zoom In',
           ),
           IconButton(
             icon: const Icon(Icons.remove),
             onPressed: () => ZoomNotifier.decreaseZoom(),
-            //tooltip: 'Zoom Out',
           ),
-           ValueListenableBuilder<ThemeMode>(
+          ValueListenableBuilder<ThemeMode>(
             valueListenable: ThemeNotifier.themeMode,
             builder: (context, mode, _) => IconButton(
-              icon: Icon(
-                mode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
-              ),
-              onPressed: () {
-                ThemeNotifier.toggleTheme();
-              },
+              icon: Icon(mode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode),
+              onPressed: () => ThemeNotifier.toggleTheme(),
             ),
           ),
           if (_firstNameInitial != null)
@@ -207,11 +179,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       ),
       body: Row(
         children: [
-          //if (isWideScreen)
-            _SideNavigationMenu(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onItemTapped,
-            ),
+          _SideNavigationMenu(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+          ),
           Expanded(
             child: IndexedStack(
               index: _selectedIndex,
@@ -237,19 +208,20 @@ class _SideNavigationMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
-        width: 80,
-        color: isDarkMode ? Colors.grey[900] : Colors.white,
-        child: Column(
-          children: [
-            _buildNavItem(context, Icons.home, 'Home', 0),
-            _buildNavItem(context, Icons.draw, 'Contracts', 1),
-            _buildNavItem(context, Icons.front_hand, 'Demands', 2),
-            _buildNavItem(context, Icons.lightbulb, 'Intellectual Property', 3),
-            _buildNavItem(context, Icons.apartment, 'Leases', 4),
-            _buildNavItem(context, Icons.gavel, 'Litigation', 5),
-          ],
-        ),
-      );
+      width: 80,
+      color: isDarkMode ? Colors.grey[900] : Colors.white,
+      child: Column(
+        children: [
+          _buildNavItem(context, Icons.home, 'Home', 0),
+          _buildNavItem(context, Icons.draw, 'Contracts', 1),
+          _buildNavItem(context, Icons.front_hand, 'Demands', 2),
+          _buildNavItem(context, Icons.lightbulb, 'Intellectual Property', 3),
+          _buildNavItem(context, Icons.apartment, 'Leases', 4),
+          _buildNavItem(context, Icons.gavel, 'Litigation', 5),
+          _buildNavItem(context, Icons.settings, 'Settings', 6),
+        ],
+      ),
+    );
   }
 
   Widget _buildNavItem(BuildContext context, IconData icon, String title, int index) {
@@ -258,6 +230,7 @@ class _SideNavigationMenu extends StatelessWidget {
     return Tooltip(
       message: title,
       textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      //preferBelow: false,
       child: InkWell(
         onTap: () => onItemTapped(index),
         child: Container(
@@ -267,21 +240,15 @@ class _SideNavigationMenu extends StatelessWidget {
             color: isSelected ? (isDarkMode ? Colors.grey : Colors.black) : Colors.transparent,
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? (isDarkMode ? Colors.black : Colors.white) : (isDarkMode ? Colors.white : Colors.black),
-              ),
-            ],
+          child: Icon(
+            icon,
+            color: isSelected ? (isDarkMode ? Colors.black : Colors.white) : (isDarkMode ? Colors.white : Colors.black),
           ),
         ),
       ),
     );
   }
 }
-
 
 class _AvatarMenu extends StatefulWidget {
   final String initial;

@@ -7,7 +7,7 @@ class LeasesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leases'),
+       //title: const Text('Leases'),
       ),
       body: const Center(
         child: Text('Leases Tab'),

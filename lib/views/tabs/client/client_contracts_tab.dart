@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class LitigationTab extends StatelessWidget {
-  const LitigationTab({super.key});
+class ClientContractsTab extends StatelessWidget {
+  const ClientContractsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Text('Litigation Tab'),
+        child: Text('Client Contracts Tab'),
       ),
     );
   }

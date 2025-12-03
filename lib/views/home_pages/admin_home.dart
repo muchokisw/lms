@@ -9,15 +9,18 @@ import '../tabs/demands_tab.dart';
 import '../tabs/intellectual_property_tab.dart';
 import '../tabs/leases_tab.dart';
 import '../tabs/litigation_tab.dart';
+import '../tabs/settings_tab.dart';
 
 // Avatar context menu content widget
 class _AvatarMenuContent extends StatelessWidget {
   final String fullName;
   final String email;
+  final String role;
 
   const _AvatarMenuContent({
     required this.fullName,
     required this.email,
+    required this.role,
   });
 
   @override
@@ -26,36 +29,53 @@ class _AvatarMenuContent extends StatelessWidget {
     final foregroundColor = isDarkMode ? Colors.black : Colors.black;
     final buttonBackgroundColor = isDarkMode ? Colors.black : Colors.black;
     final buttonForegroundColor = isDarkMode ? Colors.white : Colors.white;
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 220, maxWidth: 320),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
         mainAxisSize: MainAxisSize.min,
         children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            child: Text(
+              initial,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             fullName,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: 
-            FontWeight.bold, 
-            color: foregroundColor
-            ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: foregroundColor,
+                ),
           ),
           const SizedBox(height: 4),
           Text(
             email,
-            style: TextStyle(color: foregroundColor)
+            style: TextStyle(color: foregroundColor),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          Text(
+            role,
+            style: TextStyle(color: foregroundColor),
+          ),
+          const SizedBox(height: 16), // Increased spacing
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: buttonBackgroundColor,
               foregroundColor: buttonForegroundColor,
+              minimumSize: const Size(double.infinity, 48), // Make button wider
             ),
             child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              Navigator.of(context).pop(); // Close the sheet
+              Navigator.of(context).pop(); // Close the menu
               Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (route) => false);
             },
           ),
@@ -76,6 +96,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   String? _firstNameInitial;
   String? _fullName;
   String? _email;
+  String? _role;
 
   @override
   void didChangeDependencies() {
@@ -104,6 +125,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         setState(() {
           _fullName = lastName != null && firstName != null ? '$firstName $lastName' : firstName ?? '';
           _email = user.email;
+          _role = data?['role'];
         });
       }
     }
@@ -121,6 +143,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       const IntellectualPropertyTab(),
       const LeasesTab(),
       const LitigationTab(),
+      const SettingsTab(),
     ]);
   }
 
@@ -134,7 +157,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
   final isWideScreen = screenWidth > 850;
-  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -179,155 +201,43 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 initial: _firstNameInitial!,
                 fullName: _fullName,
                 email: _email,
+                role: _role,
               ),
             ),
         ],
       ),
-      body: Row(
-        children: [
-          if (isWideScreen)
-            _SideNavigationMenu(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onItemTapped,
-            ),
-          Expanded(
-            child: IndexedStack(
+      body: isWideScreen
+          ? Row(
+              children: [
+                _SideNavigationMenu(
+                  selectedIndex: _selectedIndex,
+                  onItemTapped: _onItemTapped,
+                ),
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: _tabs,
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(
               index: _selectedIndex,
               children: _tabs,
             ),
-          ),
-        ],
-      ),
       bottomNavigationBar: isWideScreen
           ? null
           : BottomNavigationBar(
-              type: BottomNavigationBarType.shifting,
               currentIndex: _selectedIndex,
               onTap: _onItemTapped,
-              selectedItemColor: isDarkMode ? Colors.white : Colors.black,
-              unselectedItemColor: isDarkMode ? Colors.white : Colors.black,
-              backgroundColor: isDarkMode ? Colors.black : Colors.white,
-              items: [
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.home),
-                      if (_selectedIndex == 0)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.gavel),
-                      if (_selectedIndex == 1)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.warning),
-                      if (_selectedIndex == 2)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.lightbulb),
-                      if (_selectedIndex == 3)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.real_estate_agent),
-                      if (_selectedIndex == 4)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
-                 BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.balance),
-                      if (_selectedIndex == 5)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 24,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white : Colors.black,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                  backgroundColor: isDarkMode ? Colors.grey[800] : null,
-                  label: '',
-                ),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                BottomNavigationBarItem(icon: Icon(Icons.draw), label: 'Contracts'),
+                BottomNavigationBarItem(icon: Icon(Icons.front_hand), label: 'Demands'),
+                BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: 'Intellectual Property'),
+                BottomNavigationBarItem(icon: Icon(Icons.apartment), label: 'Leases'),
+                BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Litigation'),
+                BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
               ],
             ),
     );
@@ -352,11 +262,12 @@ class _SideNavigationMenu extends StatelessWidget {
         child: Column(
           children: [
             _buildNavItem(context, Icons.home, 'Home', 0),
-            _buildNavItem(context, Icons.adf_scanner, 'Contracts', 1),
-            _buildNavItem(context, Icons.emoji_people, 'Demands', 2),
+            _buildNavItem(context, Icons.draw, 'Contracts', 1),
+            _buildNavItem(context, Icons.front_hand, 'Demands', 2),
             _buildNavItem(context, Icons.lightbulb, 'Intellectual Property', 3),
             _buildNavItem(context, Icons.apartment, 'Leases', 4),
-            _buildNavItem(context, Icons.balance, 'Litigation', 5),
+            _buildNavItem(context, Icons.gavel, 'Litigation', 5),
+            _buildNavItem(context, Icons.settings, 'Settings', 6),
           ],
         ),
       );
@@ -367,6 +278,7 @@ class _SideNavigationMenu extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Tooltip(
       message: title,
+      //preferBelow: false,
       textStyle: const TextStyle(fontWeight: FontWeight.bold),
       child: InkWell(
         onTap: () => onItemTapped(index),
@@ -397,7 +309,8 @@ class _AvatarMenu extends StatefulWidget {
   final String initial;
   final String? fullName;
   final String? email;
-  const _AvatarMenu({required this.initial, this.fullName, this.email});
+  final String? role;
+  const _AvatarMenu({required this.initial, this.fullName, this.email, this.role});
 
   @override
   State<_AvatarMenu> createState() => _AvatarMenuState();
@@ -429,6 +342,7 @@ class _AvatarMenuState extends State<_AvatarMenu> {
           child: _AvatarMenuContent(
             fullName: widget.fullName ?? '',
             email: widget.email ?? '',
+            role: widget.role ?? '',
           ),
         ),
       ],

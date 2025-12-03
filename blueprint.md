@@ -3,61 +3,52 @@
 
 ## Overview
 
-This document outlines the plan, style, design, and features of an agentic legal management system built with Flutter and Firebase. The system will leverage AI to assist with case management, document analysis, and other legal tasks.
+This document outlines the plan, style, design, and features of a bespoke Legal Management System for Jubilee Insurance, built with Flutter and Firebase. The system is designed to streamline and automate the contract review and case management processes for the legal and business teams.
 
-## Current State
+## Current State & Features
 
-*   **Application:** Blank Flutter app connected to Firebase.
+*   **Authentication:** Robust user authentication is in place, allowing sign-in via email/password and Microsoft accounts. User roles (e.g., 'Client', 'Legal') are managed in Firestore.
+*   **UI Foundation:**
+    *   A modern, responsive UI with support for light/dark modes and dynamic font sizing.
+    *   A main navigation structure with tabs for Dashboard, Contracts, Cases, Tasks, Analytics, and Reports.
+*   **Contracts Tab:**
+    *   The 'Contracts' tab is set up with two sub-tabs: 'Business Contract' and 'Service Contract'.
+    *   These sub-tabs are currently blank placeholders awaiting implementation of their specific workflows.
 
-## Plan for Current Request
+## Plan for Current Request: Contract Workflow Implementation
 
-### Goal: Develop an agentic legal management system.
+The next phase is to build out the core functionality for the 'Business Contract' and 'Service Contract' sub-tabs based on the detailed process flows provided.
 
-### File Structure (Phase 1 - Foundation):
+### 1. High-Level Design for Contract Sub-Tabs
 
-### Firestore Database Structure:
+Each sub-tab (Business & Service) will be composed of two primary views:
 
-```json
-{
-  "users": {
-      "userId": 
-      "firstName": 
-      "secondName":
-      "email": 
-      "createdAt"(timestamp):
-      "updatedAt"(timestamp):
-      "role": 
-  },
-  "cases": {
-    "caseId1": {
-      "caseNumber": "C-2024-001",
-      "title": "Contract Dispute - Acme Inc.",
-      "description": "Breach of contract regarding software development.",
-      "status": "open", // or "closed", "pending"
-      "client": "clientId1",
-      "assignedLawyers": ["lawyerId1", "lawyerId2"],
-      "createdAt": "timestamp",
-      "updatedAt": "timestamp"
-    }
-  },
-  "documents": {
-    "docId1": {
-      "caseId": "caseId1",
-      "fileName": "contract.pdf",
-      "storagePath": "/documents/caseId1/contract.pdf",
-      "uploadedBy": "userId1",
-      "createdAt": "timestamp",
-      "summary": "This is an AI-generated summary of the document."
-    }
-  }
-}
-```
+*   **Contracts Dashboard:**
+    *   This will be the main view for the sub-tab.
+    *   It will display a real-time list of all contracts of that type, fetched from Firestore.
+    *   Each item in the list will be a summary card showing key details like **Contract Title**, **Current Status** (e.g., "In Legal Review", "Awaiting Client Signature"), and **Expiry Date**.
+    *   A **Floating Action Button** will allow authorized users (i.e., the 'Business' team) to initiate a new contract review process.
+*   **Contract Details & Workflow View:**
+    *   Clicking a contract on the dashboard will navigate the user here.
+    *   **Workflow Stepper:** A visual timeline at the top will clearly indicate the contract's current stage in the process.
+    *   **Contract Information Panel:** Displays the essential metadata captured during initiation (Parties, Commencement Date, Expiry Date, Contract Price, etc.). This section will be read-only after the initial submission.
+    *   **Documents & Versioning Section:** A secure file management area to upload and access all related documents. It will maintain a version history of the primary contract as it's revised.
+    *   **Review & Communication Thread:** A dedicated, chronological comment thread for all communication between the Legal and Business teams regarding the contract, creating a clear and auditable record.
+    *   **Contextual Action Buttons:** The UI will dynamically display action buttons (e.g., "Submit to Legal", "Share with Client", "Upload Executed Contract") based on the contract's current status and the user's role.
 
-### Development Steps:
+### 2. Backend & Technical Implementation
 
-1.  **Create the proposed file structure.** I will create the directories and empty files for the initial structure.
-2.  **Implement the authentication feature.** This will include the UI for login/signup and the repository for interacting with Firebase Auth.
-3.  **Build the core services.** I will create the services for interacting with Firestore, Firebase Storage, and the Gemini API.
-4.  **Develop the case and document management features.** This will involve creating the models, repositories, and UI for managing cases and documents.
+*   **Firestore Database (`contracts` collection):**
+    *   A new `contracts` collection will be created.
+    *   Each document will represent a single contract, storing its metadata, type ('Business' or 'Service'), current status, involved user IDs, and timestamps for each stage.
+    *   Sub-collections within each contract document will manage the discussion thread comments and the list of document references.
+*   **Firebase Storage:**
+    *   All uploaded files will be stored securely in Firebase Storage, organized into folders based on the contract ID.
+*   **Firebase Cloud Functions (for automation):**
+    *   **5-Day Upload Reminder:** A scheduled function will query for contracts signed by the CEO over 5 days ago that are missing the final executed copy.
+    *   **60-Day Expiry Reminder:** A separate scheduled function will find all contracts expiring in 60 days.
+    *   These functions will trigger automated notifications (e.g., in-app or email) to the responsible parties.
+*   **Role-Based Access Control (RBAC):**
+    *   The application will enforce strict permissions. The UI and available actions will adapt based on the logged-in user's role ('Business' or 'Legal'), ensuring data integrity and process compliance.
 
-https://jubileeinsurancelms.firebaseapp.com/__/auth/handler 
+This structured approach will create an intuitive, efficient, and powerful system that directly addresses the specified workflows, enhancing clarity and accountability in Jubilee Insurance's contract management process.

@@ -7,7 +7,7 @@ class IntellectualPropertyTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Intellectual Property'),
+        //title: const Text('Intellectual Property'),
       ),
       body: const Center(
         child: Text('Intellectual Property Tab'),

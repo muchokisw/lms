@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import '../main.dart';
 import '../services/theme_notifier.dart';
 import '../services/zoom_notifier.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key}); 
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -20,6 +26,113 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
+  final String clientId = '6d1f1428-3acf-4ce6-a01a-e2cd492741d6';
+  final String tenantId = 'common';
+
+  Future<void> _handleSignIn(UserCredential userCredential) async {
+    final user = userCredential.user;
+    if (user == null) return;
+
+    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final docSnapshot = await userRef.get(const GetOptions(source: Source.server));
+
+    if (!docSnapshot.exists) {
+      final displayName = user.displayName ?? '';
+      final nameParts = displayName.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final secondName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+      try {
+        await userRef.set({
+          'userId': user.uid,
+          'firstName': firstName,
+          'secondName': secondName,
+          'email': user.email,
+          'role': 'Client',
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        debugPrint('Error creating user document: $e');
+      }
+    }
+  }
+
+  Future<void> _signInWithMicrosoft() async {
+    setState(() => _isLoading = true);
+
+    try {
+      UserCredential userCredential;
+      if (kIsWeb) {
+        final provider = OAuthProvider("microsoft.com");
+        provider.setCustomParameters({'tenant': tenantId});
+        userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
+      } else {
+        final String redirectUri = 'jubileeinsurancelms://auth';
+        final url =
+            'https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize'
+            '?client_id=$clientId'
+            '&response_type=code'
+            '&redirect_uri=${Uri.encodeComponent(redirectUri)}'
+            '&response_mode=query'
+            '&scope=openid%20email%20profile%20offline_access%20User.Read';
+
+        final result = await FlutterWebAuth.authenticate(url: url, callbackUrlScheme: "jubileeinsurancelms");
+        final code = Uri.parse(result).queryParameters['code'];
+
+        if (code == null) {
+          throw Exception('Authorization code not found in response.');
+        }
+
+        final response = await http.post(
+          Uri.parse('https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token'),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: {
+            'client_id': clientId,
+            'grant_type': 'authorization_code',
+            'scope': 'openid email profile offline_access User.Read',
+            'code': code,
+            'redirect_uri': redirectUri,
+          },
+        );
+
+        final body = json.decode(response.body);
+        final String? accessToken = body['access_token'];
+        final String? idToken = body['id_token'];
+
+        if (accessToken == null || idToken == null) {
+          throw Exception('Access token or ID token is null');
+        }
+
+        final credential = OAuthProvider("microsoft.com").credential(
+          idToken: idToken,
+          accessToken: accessToken,
+        );
+
+        userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+
+      await _handleSignIn(userCredential);
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AuthWrapper()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error signing in: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
@@ -31,6 +144,13 @@ class _AuthScreenState extends State<AuthScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AuthWrapper()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,17 +209,15 @@ class _AuthScreenState extends State<AuthScreen> {
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
                     'Welcome',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildTextField(
                     controller: _emailController,
                     labelText: 'Email Address',
@@ -108,29 +226,30 @@ class _AuthScreenState extends State<AuthScreen> {
                     onFieldSubmitted: (_) {
                       FocusScope.of(context).requestFocus(_passwordFocusNode);
                     },
-                    validator: (value) => !(value??'').contains('@')
+                    validator: (value) => !(value ?? '').contains('@')
                         ? 'Please enter a valid email.'
                         : null,
                   ),
                   const SizedBox(height: 16),
                   _buildPasswordField(),
-                  const SizedBox(height: 16),
-                  if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    ElevatedButton(
-                      onPressed: _submit,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 22),
-                      ),
-                      child: const Text(
-                        'Sign In',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                  const SizedBox(height: 24),
+                  
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 22),
+                       shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
                     ),
+                    child: const Text(
+                      'Sign In',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -155,7 +274,9 @@ class _AuthScreenState extends State<AuthScreen> {
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+        labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black,
+        
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24.0),
           borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.black),
@@ -207,7 +328,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       obscureText: !_isPasswordVisible,
       validator: (value) =>
-          (value??'').length < 6 ? 'Password must be at least 6 characters.' : null,
+          (value ?? '').length < 4 ? 'Password must be at least 4 characters.' : null,
     );
   }
 }

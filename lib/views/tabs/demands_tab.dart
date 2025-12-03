@@ -7,7 +7,7 @@ class DemandsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Demands'),
+        //title: const Text('Demands'),
       ),
       body: const Center(
         child: Text('Demands Tab'),
