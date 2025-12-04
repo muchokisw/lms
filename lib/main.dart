@@ -38,8 +38,11 @@ class MyApp extends StatelessWidget {
                 '/client_home': (context) => const ClientDashboardPage(),
               },
               builder: (context, child) {
+                // Use textScaleFactor since `textScaler` and TextScaler are not
+                // available in this Flutter SDK version. Zoom level maps to the
+                // text scale factor to allow UI zooming.
                 return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(zoomLevel)),
+                  data: MediaQuery.of(context).copyWith(textScaleFactor: zoomLevel),
                   child: child!,
                 );
               },

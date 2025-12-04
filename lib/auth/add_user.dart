@@ -292,7 +292,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
     final dropdownColor = isDarkMode ? Colors.grey[800] : Colors.white;
 
     return DropdownButtonFormField<String>(
-      initialValue: _selectedRole,
+      value: _selectedRole,
       dropdownColor: dropdownColor,
       decoration: InputDecoration(
         labelText: 'Role',
