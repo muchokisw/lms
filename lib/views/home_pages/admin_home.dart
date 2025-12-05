@@ -279,7 +279,10 @@ class _SideNavigationMenu extends StatelessWidget {
     return Tooltip(
       message: title,
       //preferBelow: false,
-      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      textStyle: TextStyle(
+        color: isDarkMode ? Colors.black : Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
       child: InkWell(
         onTap: () => onItemTapped(index),
         child: Container(
