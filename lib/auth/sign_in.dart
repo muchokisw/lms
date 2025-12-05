@@ -213,6 +213,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const Text(
                     'Welcome',
                     style: TextStyle(
+                      fontWeight: FontWeight.bold,
                       fontSize: 20,
                     ),
                     textAlign: TextAlign.center,
