@@ -144,11 +144,12 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth >= 800;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: screenWidth >= 800,
+        centerTitle: isWideScreen,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -191,6 +192,171 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
           ),
         ],
       ),
+      bottomNavigationBar: isWideScreen
+          ? null
+          : BottomNavigationBar(
+              type: BottomNavigationBarType.shifting,
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              selectedItemColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : Colors.white,
+              unselectedItemColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : Colors.white,
+              backgroundColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.white
+                  : Colors.black,
+              items: [
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.home),
+                      if (_selectedIndex == 0)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.draw),
+                      if (_selectedIndex == 1)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.front_hand),
+                      if (_selectedIndex == 2)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lightbulb),
+                      if (_selectedIndex == 3)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.apartment),
+                      if (_selectedIndex == 4)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.gavel),
+                      if (_selectedIndex == 5)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.settings),
+                      if (_selectedIndex == 6)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          width: 24,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.black,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '',
+                ),
+              ],
+            ),
     );
   }
 }
